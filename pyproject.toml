@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "portcheckerio"
-version = "0.1.2"
+version = "0.1.3"
 description = "A new way to query the ports of a given hostname of IP address"
 authors = ["Dan Hand <info@portchecker.io>"]
 license = "MIT"

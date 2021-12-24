@@ -23,8 +23,8 @@ class TestValidIPAddress:
 
     def test_private_ipv4_failure(self):
         with pytest.raises(ValueError, match=constants.NOT_PUBLIC_IP_ERROR):
-            is_address_valid(constants.VALID_PRIVATE_IPV4)
+            is_address_valid(constants.VALID_PRIVATE_IPV4, allow_private=False)
 
     def test_private_ipv6_failure(self):
         with pytest.raises(ValueError, match=constants.NOT_PUBLIC_IP_ERROR):
-            is_address_valid(constants.VALID_PRIVATE_IPV6)
+            is_address_valid(constants.VALID_PRIVATE_IPV6, allow_private=False)

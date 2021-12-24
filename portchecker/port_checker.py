@@ -42,7 +42,7 @@ def is_ip_address(address: str) -> bool:
         return False
 
 
-def is_address_valid(address: str) -> bool:
+def is_address_valid(address: str, allow_private: bool = True) -> bool:
     """
     Determines whether the supplied IP address is public.
 
@@ -53,7 +53,7 @@ def is_address_valid(address: str) -> bool:
     :raises ValueError: If the provided address is not a valid public IP address (eg, not RFC1918)
     """
     address_obj = ip_address(address)
-    if address_obj.is_private:
+    if not allow_private and address_obj.is_private:
         raise ValueError(
             f"IPv{address_obj.version} address '{address}' does not appear to be public"
         )
@@ -122,7 +122,7 @@ def check_connect(address: tuple, timeout: int) -> tuple:
     return address, connectable
 
 
-def validate(host: str, ports: list) -> bool:
+def validate(host: str, ports: list, allow_private: bool = True) -> bool:
     """
     Validates the provided host and port list is a valid public IP address or a resolvable hostname
 
@@ -139,17 +139,19 @@ def validate(host: str, ports: list) -> bool:
     is_ip = is_ip_address(host)
     is_ports_valid(ports)
     if is_ip:
-        is_address_valid(host)
+        is_address_valid(host, allow_private)
     else:
         is_valid_hostname(host)
     return True
 
 
-def do_portcheck(*, host: str = None, ports: list = None, timeout: int = 2):
+def do_portcheck(
+    *, host: str = None, ports: list = None, allow_private: bool = True, timeout: int = 2
+):
     """
     The main function called by Lambda
     """
-    validate(host, ports)
+    validate(host, ports, allow_private)
     output = {}
     found_addresses = []
     for port in ports:

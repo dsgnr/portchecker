@@ -20,7 +20,7 @@ class TestValidate:
 
     def test_validate_private_ipv4(self):
         with pytest.raises(ValueError, match=constants.NOT_PUBLIC_IP_ERROR):
-            validate(constants.VALID_PRIVATE_IPV4, constants.VALID_PORTS)
+            validate(constants.VALID_PRIVATE_IPV4, constants.VALID_PORTS, allow_private=False)
 
     def test_validate_public_ipv4(self):
         assert validate(constants.VALID_PUBLIC_IPV4, constants.VALID_PORTS) is True

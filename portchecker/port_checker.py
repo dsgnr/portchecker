@@ -97,7 +97,7 @@ def is_ports_valid(ports: list) -> bool:
     return True
 
 
-def check_connect(address: tuple, timeout: int = 2) -> tuple:
+def check_connect(address: tuple, timeout: int) -> tuple:
     """
     Attempts to make a socket connection to the address tuple provided.
     Example tuple: `('142.250.178.14', 443)`
@@ -142,19 +142,21 @@ def validate(host: str, ports: list) -> bool:
     return True
 
 
-def do_portcheck(address, ports):
+def do_portcheck(*, host: str = None, ports: list = None, timeout: int = 2):
     """
     The main function called by Lambda
     """
-    validate(address, ports)
+    validate(host, ports)
     output = {}
     found_addresses = []
     for port in ports:
-        for sockaddr in getaddrinfo(address, port, proto=IPPROTO_TCP):
+        for sockaddr in getaddrinfo(host, port, proto=IPPROTO_TCP):
             found_addresses.append(sockaddr[-1])
 
     with concurrent.futures.ThreadPoolExecutor(max_workers=20) as executor:
-        future_to_url = {executor.submit(check_connect, url): url for url in found_addresses}
+        future_to_url = {
+            executor.submit(check_connect, url, timeout): url for url in found_addresses
+        }
         for future in concurrent.futures.as_completed(future_to_url):
             url = future_to_url[future]
             address, connectable = future.result()
@@ -163,6 +165,22 @@ def do_portcheck(address, ports):
             output[address[0]].setdefault("results", [])
             output[address[0]]["results"].append({"port": address[1], "connectable": connectable})
     return output
+
+
+def argsparse_minimum_timeout(provided_timeout):
+    """
+    Raise if a timeout value of <1 is provided to arg parse
+    """
+    try:
+        timeout = int(provided_timeout)
+    except ValueError:
+        raise argparse.ArgumentTypeError(
+            f"Timeout must be an integer. You provided '{provided_timeout}'"
+        )
+
+    if timeout < 1:
+        raise argparse.ArgumentTypeError("The provided timeout is below the minimum of 1")
+    return timeout
 
 
 def main() -> dict:
@@ -182,10 +200,11 @@ def main() -> dict:
         required=True,
         help="A space separated list of ports to query",
     )
+    parser.add_argument(
+        '--timeout', help="Specify the socket timeout for the query", type=argsparse_minimum_timeout
+    )
     args = parser.parse_args()
-    supplied_address = args.host
-    supplied_ports = args.ports
-    print(json.dumps(do_portcheck(supplied_address, supplied_ports), indent=4))
+    print(json.dumps(do_portcheck(**vars(args)), indent=4))
 
 
 if __name__ == "__main__":

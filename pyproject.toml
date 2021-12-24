@@ -1,0 +1,51 @@
+[tool.poetry]
+name = "portcheckerio"
+version = "0.1.2"
+description = "A new way to query the ports of a given hostname of IP address"
+authors = ["Dan Hand <info@portchecker.io>"]
+license = "MIT"
+readme = "README.md"
+homepage = "https://github.com/dsgnr/portchecker"
+repository = "https://github.com/dsgnr/portchecker"
+packages = [
+    {include = "portchecker"}
+]
+include = [
+    "LICENSE",
+]
+
+[tool.poetry.scripts]
+portcheck = "portchecker.port_checker:main"
+
+[tool.poetry.dependencies]
+python = ">3.6.2,<4.0"
+
+[tool.poetry.dev-dependencies]
+pytest = "^5.2"
+pycodestyle = "^2.8.0"
+pylint = ">=2.11"
+isort = "^5.10.1"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.black]
+line-length = 100
+target-version = ["py39"]
+skip-string-normalization = true
+skip-numeric-underscore-normalization = true
+
+[tool.isort]
+combine_as_imports = true
+force_grid_wrap = 0
+include_trailing_comma = true
+multi_line_output = 3
+use_parentheses = true
+line_length = 100
+wrap_length = 100
+ensure_newline_before_comments = true
+
+import_heading_firstparty = "First Party"
+import_heading_stdlib = "Standard Library"
+import_heading_thirdparty = "Third Party"

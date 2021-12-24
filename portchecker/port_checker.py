@@ -77,24 +77,27 @@ def is_valid_hostname(hostname: str) -> bool:
         raise ValueError(f"Hostname '{hostname}' does not appear to resolve")
 
 
-def is_ports_valid(ports: list) -> bool:
+def is_ports_valid(ports: list) -> list:
     """
     Determines whether the supplied list of ports is within the valid range.
 
     :param ports: A list of ports to check
     :type: hostname: list
-    :return: bool
+    :return: list
 
     :raises ValueError: If any number of the provided ports are outside the valid range
     """
     invalid = []
     for port in ports:
-        if 1 <= int(port) <= 65535:
-            continue
-        invalid.append(str(port))
+        try:
+            if 1 <= int(port) <= 65535:
+                continue
+            invalid.append(str(port))
+        except ValueError:
+            raise ValueError(f"{port} is not a valid integer!")
     if invalid:
         raise ValueError(f"Port(s) '{', '.join(invalid)}' is not in a valid range of (1-65535)")
-    return True
+    return ports
 
 
 def check_connect(address: tuple, timeout: int) -> tuple:
@@ -183,20 +186,39 @@ def argsparse_minimum_timeout(provided_timeout):
     return timeout
 
 
+def argsparse_validate_ports(provided_ports):
+    """
+    Raise if any of the ports provided to arg parse are invalid
+    """
+    try:
+        port = int(provided_ports)
+    except ValueError:
+        raise argparse.ArgumentTypeError(
+            f"Ports must be an integer. You provided '{provided_ports}'"
+        )
+
+    try:
+        is_ports_valid([port])
+    except Exception as ex:
+        raise argparse.ArgumentTypeError(str(ex))
+    return provided_ports
+
+
 def main() -> dict:
     """
     The entrypoint of the script.
     """
     parser = argparse.ArgumentParser(
-        description="Query the port status of a given hostname or IP address"
+        description="Query the port status of a given hostname or IP address",
+        argument_default=argparse.SUPPRESS,
     )
     parser.add_argument(
         '--host', type=str, required=True, help="The hostname or IP address to query"
     )
     parser.add_argument(
         '--ports',
-        type=int,
-        nargs='*',
+        type=argsparse_validate_ports,
+        nargs='+',
         required=True,
         help="A space separated list of ports to query",
     )

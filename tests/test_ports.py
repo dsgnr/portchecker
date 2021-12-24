@@ -8,7 +8,7 @@ from tests import constants
 
 class TestHostname:
     def test_is_valid_ports(self):
-        assert is_ports_valid(constants.VALID_PORTS) is True
+        assert is_ports_valid(constants.VALID_PORTS) == constants.VALID_PORTS
 
     def test_is_invalid_ports(self):
         with pytest.raises(ValueError, match=constants.INVALID_PORT_ERROR):

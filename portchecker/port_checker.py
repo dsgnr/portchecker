@@ -25,6 +25,10 @@ from socket import (
     timeout as socket_timeout,
 )
 
+# Third Party
+from colorama import Fore
+from tabulate import tabulate
+
 
 def is_ip_address(address: str) -> bool:
     """
@@ -166,7 +170,7 @@ def do_portcheck(
             url = future_to_url[future]
             address, connectable = future.result()
             output.setdefault(address[0], {})
-            output[address[0]].setdefault("type", f"ipv{ip_address(address[0]).version}")
+            output[address[0]].setdefault("type", f"IPv{ip_address(address[0]).version}")
             output[address[0]].setdefault("results", [])
             output[address[0]]["results"].append({"port": address[1], "connectable": connectable})
     return output
@@ -206,6 +210,26 @@ def argsparse_validate_ports(provided_ports):
     return provided_ports
 
 
+def results_table(results: dict):
+    """
+    Creates a colorised tabulate table with the check results
+    """
+    headers = ["Host", "Type", "Port", "Connectable"]
+    table_output = []
+    for host, res in results.items():
+        for check in res["results"]:
+            connectable_color = Fore.GREEN if check["connectable"] else Fore.RED
+            table_output.append(
+                [
+                    host,
+                    res["type"],
+                    check["port"],
+                    connectable_color + str(check['connectable']) + Fore.RESET,
+                ]
+            )
+    return tabulate(table_output, headers=headers)
+
+
 def main() -> dict:
     """
     The entrypoint of the script.
@@ -227,8 +251,25 @@ def main() -> dict:
     parser.add_argument(
         '--timeout', help="Specify the socket timeout for the query", type=argsparse_minimum_timeout
     )
+    parser.add_argument(
+        '--format',
+        help="Specify how to output the results (default: tabulate)",
+        default="tabulate",
+        choices=["tabulate", "json"],
+    )
+
     args = parser.parse_args()
-    print(json.dumps(do_portcheck(**vars(args)), indent=4))
+    format_type = vars(args).pop("format")
+    try:
+        checks = do_portcheck(**vars(args))
+    except Exception as ex:
+        print(f"{Fore.RED}Error:{Fore.RESET} {str(ex)}")
+        sys.exit(1)
+    if format_type == "json":
+        print(json.dumps(do_portcheck(**vars(args)), indent=4))
+        sys.exit(0)
+    print(results_table(checks))
+    sys.exit(0)
 
 
 if __name__ == "__main__":

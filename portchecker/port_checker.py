@@ -262,7 +262,7 @@ def main() -> dict:
     format_type = vars(args).pop("format")
     try:
         checks = do_portcheck(**vars(args))
-    except Exception as ex:
+    except ValueError as ex:
         print(f"{Fore.RED}Error:{Fore.RESET} {str(ex)}")
         sys.exit(1)
     if format_type == "json":
